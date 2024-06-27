@@ -1,30 +1,77 @@
-# React + TypeScript + Vite
+# DeporSwitch
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+DeporSwitch es una extensión de Chrome diseñada para empleados de Deporvillage. Permite cambiar rápidamente entre diferentes dominios de productos y copiar URLs de productos específicos en otros dominios.
 
-Currently, two official plugins are available:
+## Características
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Captura de SKU del producto actual.
+- Generación y apertura de la URL del producto en diferentes dominios.
+- Copia automática de la URL del primer resultado al portapapeles.
 
-## Expanding the ESLint configuration
+## Tecnologías Utilizadas
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+- **React** con **TypeScript**
+- **Vite**
+- **API de Chrome**
 
-- Configure the top-level `parserOptions` property like this:
+## Instalación
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
-```
+### Prerrequisitos
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+- Node.js
+- npm o yarn
+
+### Pasos
+
+1. Clona el repositorio:
+
+   ```bash
+   git clone https://github.com/JordiPutellas/depor-switch.git
+   cd depor-switch
+   ```
+
+2. Instala las dependencias:
+
+   ```bash
+   npm install
+   ```
+
+   o
+
+   ```bash
+   yarn install
+   ```
+
+3. Compila el proyecto:
+
+   ```bash
+   npm run build
+   ```
+
+   o
+
+   ```bash
+   yarn build
+   ```
+
+4. Carga la extensión en Chrome:
+   - Abre `chrome://extensions/`.
+   - Activa "Modo de desarrollador".
+   - Haz clic en "Cargar descomprimida" y selecciona la carpeta `dist`.
+
+## Uso
+
+1. Abre una página de producto en Deporvillage.
+2. Haz clic en el icono de la extensión DeporSwitch.
+3. Verás el SKU del producto y los botones de diferentes dominios.
+4. Haz clic en un botón de dominio para generar y copiar la URL del producto en ese dominio:
+   - **Clic izquierdo**: Abre la URL en una nueva pestaña en primer plano.
+   - **Clic medio (ruedita)**: Abre la URL en una nueva pestaña en segundo plano.
+
+## Contribuir
+
+Las contribuciones son bienvenidas. Si tienes alguna sugerencia o encuentras algún problema, por favor abre un issue o envía una pull request.
+
+## Licencia
+
+Este proyecto está bajo la Licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más detalles.
