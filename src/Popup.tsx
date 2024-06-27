@@ -4,6 +4,7 @@ import DomainButtonList from "./components/DomainButtonList";
 import { createSearchTab } from "./actions";
 import { copyToClipboard } from "./utils";
 import "./Popup.css";
+import logo from "../public/logo.png";
 
 const Popup = () => {
   const { sku, domain } = useSkuAndDomain();
@@ -55,7 +56,10 @@ const Popup = () => {
 
   return (
     <div className="popup">
-      <h1>DeporSwitch</h1>
+      <div className="header">
+        <img src={logo} alt="Logo" className="logo" />
+        <h1>DeporSwitch</h1>
+      </div>
       <p>Current Domain: {domain}</p>
       {sku && sku !== "SKU not found" && (
         <p onClick={handleSkuClick} style={skuStyles}>

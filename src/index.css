@@ -1,41 +1,57 @@
+/* Variables de CSS */
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --color-primary: #D10C15;
+  --color-primary-hover: #D10C15;
+  --color-background-dark: #242424;
+  --color-background-light: #ffffff;
+  --color-text-dark: rgba(255, 255, 255, 0.87);
+  --color-text-light: #213547;
+  --button-background-dark: #1a1a1a;
+  --button-background-light: #f9f9f9;
+
+  font-family: var(--font-family);
   line-height: 1;
   font-weight: 400;
-
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
+  color: var(--color-text-dark);
+  background-color: var(--color-background-dark);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
 }
 
+/* Enlaces */
 a {
   font-weight: 500;
-  color: #646cff;
+  color: var(--color-primary);
   text-decoration: inherit;
 }
+
 a:hover {
-  color: #535bf2;
+  color: var(--color-primary-hover);
 }
 
+/* Cuerpo */
 body {
   margin: 0;
   display: flex;
-  place-items: center;
+  justify-content: center;
+  align-items: center;
   min-width: 320px;
-  min-height: 100vh;
+  min-height: 400px;
+  background-color: var(--color-background-dark);
+  color: var(--color-text-dark);
 }
 
+/* Encabezados */
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
 }
 
+/* Botones */
 button {
   border-radius: 8px;
   border: 1px solid transparent;
@@ -43,27 +59,17 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--button-background-dark);
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
 button:hover {
-  border-color: #646cff;
+  border-color: var(--color-primary);
 }
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}
