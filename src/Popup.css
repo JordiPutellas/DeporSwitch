@@ -11,14 +11,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 5px;
+  margin-bottom: 0px;
+  margin-right: 40px;
 
 }
 
 .logo {
   width: 25px; /* Ajusta el tamaño del logo según sea necesario */
   height: 25px;
-  margin-right: 5px;
+  margin-right: 0px;
   margin-top: 10px;
 
 }
@@ -26,11 +27,13 @@
 .popup h1 {
   font-size: 20px;
   margin-bottom: 5px;
+  margin-left: 0px;  
 }
 
 .popup p {
   font-size: 16px;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
+  margin-top: 15px;
 }
 
 .popup button {
