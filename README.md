@@ -67,11 +67,3 @@ DeporSwitch es una extensión de Chrome diseñada para empleados de Deporvillage
 4. Haz clic en un botón de dominio para generar y copiar la URL del producto en ese dominio:
    - **Clic izquierdo**: Abre la URL en una nueva pestaña en primer plano.
    - **Clic medio (ruedita)**: Abre la URL en una nueva pestaña en segundo plano.
-
-## Contribuir
-
-Las contribuciones son bienvenidas. Si tienes alguna sugerencia o encuentras algún problema, por favor abre un issue o envía una pull request.
-
-## Licencia
-
-Este proyecto está bajo la Licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más detalles.
