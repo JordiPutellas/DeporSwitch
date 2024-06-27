@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "version": "1.0.0",
+  "name": "DeporSwitch",
+
+  "action": {
+    "default_popup": "index.html"
+  },
+  "permissions": ["scripting", "activeTab", "tabs"],
+  "host_permissions": [
+    "https://www.deporvillage.com/*",
+    "https://www.deporvillage.it/*",
+    "https://www.deporvillage.fr/*",
+    "https://www.deporvillage.net/*",
+    "https://www.deporvillage.pt/*",
+    "https://www.deporvillage.de/*",
+    "https://www.deporvillage.nl/*",
+    "https://www.deporvillage.dk/*",
+    "https://www.deporvillage.pl/*"
+  ],
+  "icons": {
+    "32": "logo.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.deporvillage.com/*",
+        "https://www.deporvillage.it/*",
+        "https://www.deporvillage.fr/*",
+        "https://www.deporvillage.net/*",
+        "https://www.deporvillage.pt/*",
+        "https://www.deporvillage.de/*",
+        "https://www.deporvillage.nl/*",
+        "https://www.deporvillage.dk/*",
+        "https://www.deporvillage.pl/*"
+      ],
+      "js": ["content.js"]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}

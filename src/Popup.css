@@ -1,0 +1,23 @@
+.popup {
+    text-align: center;
+  }
+  
+  .popup h1 {
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+  
+  .popup p {
+    font-size: 16px;
+    margin-bottom: 20px;
+  }
+  
+  .popup button {
+    display: block;
+    width: 100px;
+    margin: 5px auto;
+    padding: 5px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  
