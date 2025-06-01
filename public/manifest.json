@@ -9,14 +9,18 @@
   "permissions": ["activeTab", "tabs"],
   "host_permissions": [
     "https://www.deporvillage.com/*",
-    "https://www.deporvillage.it/*",
     "https://www.deporvillage.fr/*",
-    "https://www.deporvillage.net/*",
+    "https://www.deporvillage.it/*",
+    "https://www.deporvillage.dk/*",
+    "https://www.deporvillage.pl/*",
+    "https://www.deporvillage.nl/*",
     "https://www.deporvillage.pt/*",
     "https://www.deporvillage.de/*",
-    "https://www.deporvillage.nl/*",
-    "https://www.deporvillage.dk/*",
-    "https://www.deporvillage.pl/*"
+    "https://www.deporvillage.net/*",
+    "https://www.deporvillage.be/*",
+    "https://www.deporvillage.cz/*",
+    "https://www.deporvillage.at/*",
+    "https://www.deporvillage.co.uk/*"
   ],
   "icons": {
     "32": "logo.png"
@@ -25,14 +29,18 @@
     {
       "matches": [
         "https://www.deporvillage.com/*",
-        "https://www.deporvillage.it/*",
         "https://www.deporvillage.fr/*",
-        "https://www.deporvillage.net/*",
+        "https://www.deporvillage.it/*",
+        "https://www.deporvillage.dk/*",
+        "https://www.deporvillage.pl/*",
+        "https://www.deporvillage.nl/*",
         "https://www.deporvillage.pt/*",
         "https://www.deporvillage.de/*",
-        "https://www.deporvillage.nl/*",
-        "https://www.deporvillage.dk/*",
-        "https://www.deporvillage.pl/*"
+        "https://www.deporvillage.net/*",
+        "https://www.deporvillage.be/*",
+        "https://www.deporvillage.cz/*",
+        "https://www.deporvillage.at/*",
+        "https://www.deporvillage.co.uk/*"
       ],
       "js": ["content.js"]
     }
