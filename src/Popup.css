@@ -1,8 +1,18 @@
 /* Estilos del Popup */
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
 .popup {
   text-align: center;
   width: 200px;
   padding: 0px;
+  margin-top: 0px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  margin-bottom: 0px;
   box-sizing: border-box;
 }
 
@@ -13,6 +23,7 @@
   justify-content: center;
   margin-bottom: 0px;
   margin-right: 40px;
+  margin-top: 0px;
 
 }
 
@@ -20,32 +31,35 @@
   width: 25px; /* Ajusta el tamaño del logo según sea necesario */
   height: 25px;
   margin-right: 0px;
-  margin-top: 10px;
+  margin-top: 0px;
 
 }
 
 .popup h1 {
-  font-size: 20px;
-  margin-bottom: 5px;
+  font-size: 18px;
+  margin-bottom: 0px;
   margin-left: 0px;  
+  margin-top: 0px;
+  padding-bottom: 3px;
+  padding-top: 3px;
 }
 
 .popup p {
-  font-size: 16px;
-  margin-bottom: 15px;
-  margin-top: 15px;
+  font-size: 14px;
+  margin-bottom: 10px;
+  margin-top: 0px;
 }
 
 .popup button {
   display: block;
   width: 60%; /* Ajusta el ancho según sea necesario */
-  margin: 3px auto;
-  padding: 7px;
-  font-size: 16px;
+  margin: 3.5px auto;
+  padding: 3.5px;
+  font-size: 15.5px;
   cursor: pointer;
   background-color: var(--button-background-dark);
   color: var(--color-text-dark);
-  border: 1px solid var(--color-primary);
+  border: 0.5px solid var(--color-primary);
   transition: background-color 0.3s, color 0.3s;
 }
 

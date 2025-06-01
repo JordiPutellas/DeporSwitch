@@ -7,8 +7,23 @@ import "./Popup.css";
 import logo from "../public/logo.png";
 
 const Popup = () => {
-  const { sku, domain } = useSkuAndDomain();
-  const domains = ["com", "it", "fr", "net", "pt", "de", "nl", "dk", "pl"];
+  const { sku } = useSkuAndDomain();
+
+  const domains = [
+    "com",
+    "fr",
+    "it",
+    "dk",
+    "pl",
+    "nl",
+    "pt",
+    "de",
+    "net",
+    "be",
+    "cz",
+    "at",
+    "co.uk",
+  ];
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -60,12 +75,15 @@ const Popup = () => {
         <img src={logo} alt="Logo" className="logo" />
         <h1>DeporSwitch</h1>
       </div>
-      <p>Current Domain: {domain}</p>
+
+      {/* Removed the “Current Domain” line here */}
+
       {sku && sku !== "SKU not found" && (
         <p onClick={handleSkuClick} style={skuStyles}>
           SKU: {sku}
         </p>
       )}
+
       <DomainButtonList domains={domains} onClick={handleDomainClick} />
     </div>
   );
