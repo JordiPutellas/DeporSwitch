@@ -16,7 +16,7 @@ const useSkuAndDomain = () => {
         if (response.sku) {
           setSku(response.sku);
         } else {
-          setSku("SKU not found");
+          console.log("SKU not found");
         }
       });
     });
