@@ -1,9 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // background.ts - minimal fetch manager for DeporSwitch
-type StartMsg = { action: "startFetch"; domain: string; sku: string; requestId: string };
+
+type StartMsg = {
+  action: "startFetch";
+  domain: string;
+  sku: string;
+  requestId: string;
+  mode?: "open" | "copy"; // 👈 NEW (optional for backwards-compat)
+};
 type AbortMsg = { action: "abortFetch"; requestId: string };
 
 const pending = new Map<string, AbortController>();
+const modes = new Map<string, "open" | "copy">(); // 👈 track mode per requestId
 
 /**
  * Sanitize URL: strip query and hash, return origin + pathname or null
@@ -40,7 +48,14 @@ function persistPdp(domain: string, sku: string, sanitizedUrl: string) {
 /**
  * Send fetchComplete to other parts of the extension
  */
-function notifyFetchComplete(requestId: string, domain: string, normalizedSku: string, sanitizedUrl: string | null, err?: string | null) {
+function notifyFetchComplete(
+  requestId: string,
+  domain: string,
+  normalizedSku: string,
+  sanitizedUrl: string | null,
+  err?: string | null
+) {
+  const mode = modes.get(requestId); // 👈 include original mode
   try {
     chrome.runtime.sendMessage({
       action: "fetchComplete",
@@ -49,174 +64,262 @@ function notifyFetchComplete(requestId: string, domain: string, normalizedSku: s
       sku: normalizedSku,
       url: sanitizedUrl ?? null,
       error: err ?? null,
+      mode, // 👈 send it back
     });
   } catch (e) {
     console.warn("[background] sendMessage(fetchComplete) failed", e);
+  } finally {
+    // Clean up mode mapping when we finish notifying
+    modes.delete(requestId);
   }
 }
 
 /**
  * Main message listener
  */
-chrome.runtime.onMessage.addListener((msg: StartMsg | AbortMsg, _sender, sendResponse) => {
-  (async () => {
-    try {
-      if (msg.action === "startFetch") {
-        // normalize SKU (trim) and use it consistently
-        const { domain, sku: rawSku, requestId } = msg;
-        const normalizedSku = rawSku ? rawSku.toString().trim() : "";
-        const origin = `https://www.deporvillage.${domain}`;
-        const searchUrl = `${origin}/catalogsearch/result?q=${encodeURIComponent(normalizedSku)}`;
+chrome.runtime.onMessage.addListener(
+  (msg: StartMsg | AbortMsg, _sender, sendResponse) => {
+    (async () => {
+      try {
+        if (msg.action === "startFetch") {
+          // normalize SKU (trim) and use it consistently
+          const { domain, sku: rawSku, requestId } = msg;
+          const mode = msg.mode ?? "open"; // default to "open" for old callers
+          modes.set(requestId, mode); // 👈 remember mode for this request
+          const normalizedSku = rawSku ? rawSku.toString().trim() : "";
+          const origin = `https://www.deporvillage.${domain}`;
+          const searchUrl = `${origin}/catalogsearch/result?q=${encodeURIComponent(
+            normalizedSku
+          )}`;
 
-        // create / store abort controller
-        const controller = new AbortController();
-        pending.set(requestId, controller);
+          // create / store abort controller
+          const controller = new AbortController();
+          pending.set(requestId, controller);
 
-        console.log(`[background] startFetch ${requestId} -> ${searchUrl} (sku='${normalizedSku}')`);
+          console.log(
+            `[background] startFetch ${requestId} -> ${searchUrl} (sku='${normalizedSku}', mode='${mode}')`
+          );
 
-        try {
-          // Try fetching the search/catalog page quickly
-          const resp = await fetch(searchUrl, { signal: controller.signal });
-          const text = await resp.text();
-
-          // Quick string-based extraction
-          let finalUrlRaw: string | null = null;
           try {
-            const wrapperRegex = /ProductItemWrapper_product-wrapper-component__MfmoG|class=["'][^"']*(?:product-list|products-grid)[^"']*["']/i;
-            const wrapperMatch = text.search(wrapperRegex);
-            if (wrapperMatch !== -1) {
-              const lookbackStart = Math.max(0, wrapperMatch - 2000);
-              const snippet = text.slice(lookbackStart, wrapperMatch + 2000);
-              const aMatch = snippet.match(/<a\s[^>]*href=["']([^"']+)["'][^>]*>/i);
-              if (aMatch && aMatch[1]) {
-                const href = aMatch[1].trim();
-                finalUrlRaw = href.startsWith("http") ? href : new URL(href, origin).href;
-                console.log(`[background] quick-extract found (raw) ${finalUrlRaw}`);
+            // Try fetching the search/catalog page quickly
+            const resp = await fetch(searchUrl, { signal: controller.signal });
+            const text = await resp.text();
+
+            // Quick string-based extraction
+            let finalUrlRaw: string | null = null;
+            try {
+              const wrapperRegex =
+                /ProductItemWrapper_product-wrapper-component__MfmoG|class=["'][^"']*(?:product-list|products-grid)[^"']*["']/i;
+              const wrapperMatch = text.search(wrapperRegex);
+              if (wrapperMatch !== -1) {
+                const lookbackStart = Math.max(0, wrapperMatch - 2000);
+                const snippet = text.slice(lookbackStart, wrapperMatch + 2000);
+                const aMatch = snippet.match(
+                  /<a\s[^>]*href=["']([^"']+)["'][^>]*>/i
+                );
+                if (aMatch && aMatch[1]) {
+                  const href = aMatch[1].trim();
+                  finalUrlRaw = href.startsWith("http")
+                    ? href
+                    : new URL(href, origin).href;
+                  console.log(
+                    `[background] quick-extract found (raw) ${finalUrlRaw}`
+                  );
+                }
               }
-            }
-          } catch (e) {
-            console.warn("[background] quick-extract error", e);
-          }
-
-          if (finalUrlRaw) {
-            // sanitize, persist and notify
-            const sanitizedFinal = sanitizeUrl(finalUrlRaw, origin);
-            if (sanitizedFinal && normalizedSku) {
-              persistPdp(domain, normalizedSku, sanitizedFinal);
+            } catch (e) {
+              console.warn("[background] quick-extract error", e);
             }
 
-            notifyFetchComplete(requestId, domain, normalizedSku, sanitizedFinal, null);
-            pending.delete(requestId);
-            // ack immediately
-            sendResponse({ ok: true });
-            return;
-          }
+            if (finalUrlRaw) {
+              // sanitize, persist and notify
+              const sanitizedFinal = sanitizeUrl(finalUrlRaw, origin);
+              if (sanitizedFinal && normalizedSku) {
+                persistPdp(domain, normalizedSku, sanitizedFinal);
+              }
 
-          // Quick extract failed -> fallback: open temporary inactive tab and ask content script
-          console.log(`[background] quick-extract failed, opening background tab for ${searchUrl}`);
+              notifyFetchComplete(
+                requestId,
+                domain,
+                normalizedSku,
+                sanitizedFinal,
+                null
+              );
+              pending.delete(requestId);
+              // ack immediately
+              sendResponse({ ok: true });
+              return;
+            }
 
-          let createdTabId: number | null = null;
-          try {
-            const created = await chrome.tabs.create({ url: searchUrl, active: false });
-            createdTabId = created.id ?? null;
-            // ack caller early; we'll send fetchComplete later
-            sendResponse({ ok: true });
-          } catch (errCreate) {
-            console.warn("[background] failed to create background tab", errCreate);
-            // notify no result
-            notifyFetchComplete(requestId, domain, normalizedSku, null, `tab_create_failed:${String(errCreate)}`);
-            pending.delete(requestId);
-            return;
-          }
+            // Quick extract failed -> fallback: open temporary inactive tab and ask content script
+            console.log(
+              `[background] quick-extract failed, opening background tab for ${searchUrl}`
+            );
 
-          // Wait for the tab to finish loading, then message content script
-          const onUpdated = (updatedTabId: number, changeInfo: chrome.tabs.TabChangeInfo) => {
-            if (updatedTabId !== createdTabId) return;
-            if (changeInfo.status !== "complete") return;
-
-            chrome.tabs.onUpdated.removeListener(onUpdated);
-
-            // If tab unexpectedly missing, notify null
-            if (createdTabId == null) {
-              notifyFetchComplete(requestId, domain, normalizedSku, null, "no_tab");
+            let createdTabId: number | null = null;
+            try {
+              const created = await chrome.tabs.create({
+                url: searchUrl,
+                active: false,
+              });
+              createdTabId = created.id ?? null;
+              // ack caller early; we'll send fetchComplete later
+              sendResponse({ ok: true });
+            } catch (errCreate) {
+              console.warn(
+                "[background] failed to create background tab",
+                errCreate
+              );
+              // notify no result
+              notifyFetchComplete(
+                requestId,
+                domain,
+                normalizedSku,
+                null,
+                `tab_create_failed:${String(errCreate)}`
+              );
               pending.delete(requestId);
               return;
             }
 
-            // Ask content script for the first result URL
-            try {
-              chrome.tabs.sendMessage(createdTabId!, { action: "getFirstResultUrl" }, (response) => {
-                const urlFromContent = response?.url ?? null;
-                const sanitized = sanitizeUrl(urlFromContent, origin);
+            // Wait for the tab to finish loading, then message content script
+            const onUpdated = (
+              updatedTabId: number,
+              changeInfo: chrome.tabs.TabChangeInfo
+            ) => {
+              if (updatedTabId !== createdTabId) return;
+              if (changeInfo.status !== "complete") return;
 
-                if (sanitized && normalizedSku) {
-                  persistPdp(domain, normalizedSku, sanitized);
-                }
+              chrome.tabs.onUpdated.removeListener(onUpdated);
 
-                notifyFetchComplete(requestId, domain, normalizedSku, sanitized ?? null, null);
+              // If tab unexpectedly missing, notify null
+              if (createdTabId == null) {
+                notifyFetchComplete(
+                  requestId,
+                  domain,
+                  normalizedSku,
+                  null,
+                  "no_tab"
+                );
+                pending.delete(requestId);
+                return;
+              }
 
-                // close temporary tab (best effort)
+              // Ask content script for the first result URL
+              try {
+                chrome.tabs.sendMessage(
+                  createdTabId!,
+                  { action: "getFirstResultUrl" },
+                  (response) => {
+                    const urlFromContent = response?.url ?? null;
+                    const sanitized = sanitizeUrl(urlFromContent, origin);
+
+                    if (sanitized && normalizedSku) {
+                      persistPdp(domain, normalizedSku, sanitized);
+                    }
+
+                    notifyFetchComplete(
+                      requestId,
+                      domain,
+                      normalizedSku,
+                      sanitized ?? null,
+                      null
+                    );
+
+                    // close temporary tab (best effort)
+                    try {
+                      if (createdTabId != null) {
+                        chrome.tabs.remove(createdTabId).catch((e) => {
+                          console.warn(
+                            "[background] failed to remove temp tab",
+                            e
+                          );
+                        });
+                      }
+                    } catch (e) {
+                      console.warn(
+                        "[background] error removing temp tab",
+                        e
+                      );
+                    }
+
+                    pending.delete(requestId);
+                  }
+                );
+              } catch (e) {
+                console.warn("[background] error messaging content script", e);
+                notifyFetchComplete(
+                  requestId,
+                  domain,
+                  normalizedSku,
+                  null,
+                  String(e)
+                );
                 try {
                   if (createdTabId != null) {
-                    chrome.tabs.remove(createdTabId).catch((e) => {
-                      console.warn("[background] failed to remove temp tab", e);
-                    });
+                    chrome.tabs
+                      .remove(createdTabId)
+                      .catch((err) => {
+                        console.warn(
+                          "[background] failed to remove temp tab after error",
+                          err
+                        );
+                      });
                   }
-                } catch (e) {
-                  console.warn("[background] error removing temp tab", e);
+                } catch (e2) {
+                  console.warn(
+                    "[background] error removing temp tab after error",
+                    e2
+                  );
                 }
-
                 pending.delete(requestId);
-              });
-            } catch (e) {
-              console.warn("[background] error messaging content script", e);
-              notifyFetchComplete(requestId, domain, normalizedSku, null, String(e));
-              try {
-                if (createdTabId != null) {
-                  chrome.tabs.remove(createdTabId).catch((err) => {
-                    console.warn("[background] failed to remove temp tab after error", err);
-                  });
-                }
-              } catch (e2) {
-                console.warn("[background] error removing temp tab after error", e2);
               }
-              pending.delete(requestId);
-            }
-          };
+            };
 
-          chrome.tabs.onUpdated.addListener(onUpdated);
+            chrome.tabs.onUpdated.addListener(onUpdated);
 
-          // exit early; we'll notify later from the onUpdated handler
-          return;
-        } catch (errFetch: any) {
-          const isAbort = errFetch && errFetch.name === "AbortError";
-          console.warn(`[background] fetch error ${requestId}`, isAbort ? "aborted" : errFetch);
-          notifyFetchComplete(requestId, domain, normalizedSku, null, isAbort ? "aborted" : String(errFetch));
-          pending.delete(requestId);
-          sendResponse({ ok: true });
+            // exit early; we'll notify later from the onUpdated handler
+            return;
+          } catch (errFetch: any) {
+            const isAbort = errFetch && errFetch.name === "AbortError";
+            console.warn(
+              `[background] fetch error ${requestId}`,
+              isAbort ? "aborted" : errFetch
+            );
+            notifyFetchComplete(
+              requestId,
+              domain,
+              normalizedSku,
+              null,
+              isAbort ? "aborted" : String(errFetch)
+            );
+            pending.delete(requestId);
+            sendResponse({ ok: true });
+            return;
+          }
+        }
+
+        if (msg.action === "abortFetch") {
+          const { requestId } = msg;
+          const controller = pending.get(requestId);
+          if (controller) {
+            controller.abort();
+            pending.delete(requestId);
+            modes.delete(requestId); // cleanup
+            sendResponse({ ok: true });
+          } else {
+            sendResponse({ ok: false, error: "not_found" });
+          }
           return;
         }
-      }
-
-      if (msg.action === "abortFetch") {
-        const { requestId } = msg;
-        const controller = pending.get(requestId);
-        if (controller) {
-          controller.abort();
-          pending.delete(requestId);
-          sendResponse({ ok: true });
-        } else {
-          sendResponse({ ok: false, error: "not_found" });
-        }
+      } catch (e) {
+        console.error("[background] handler error", e);
+        sendResponse({ ok: false, error: String(e) });
         return;
       }
-    } catch (e) {
-      console.error("[background] handler error", e);
-      sendResponse({ ok: false, error: String(e) });
-      return;
-    }
-  })();
+    })();
 
-  // indicate we will call sendResponse asynchronously
-  return true;
-});
+    // indicate we will call sendResponse asynchronously
+    return true;
+  }
+);

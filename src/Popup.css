@@ -22,40 +22,40 @@ body {
   align-items: center;
   justify-content: center;
   margin-bottom: 0px;
-  margin-right: 40px;
+  margin-right: 35px;
   margin-top: 0px;
-
+  padding:0%
 }
 
 .logo {
   width: 25px; /* Ajusta el tamaño del logo según sea necesario */
   height: 25px;
-  margin-right: 0px;
+  margin-right: 5px;
   margin-top: 0px;
-
+  padding-right: 5px;
 }
 
 .popup h1 {
-  font-size: 18px;
+  font-size: 22px;
   margin-bottom: 0px;
   margin-left: 0px;  
   margin-top: 0px;
-  padding-bottom: 3px;
-  padding-top: 3px;
+  padding-bottom: 1px;
+  padding-top: 1px;
 }
 
 .popup p {
   font-size: 14px;
-  margin-bottom: 10px;
+  margin-bottom: 7px;
   margin-top: 0px;
 }
 
 .popup button {
   display: block;
   width: 60%; /* Ajusta el ancho según sea necesario */
-  margin: 3.5px auto;
-  padding: 3.5px;
-  font-size: 15.5px;
+  margin: 2px auto;
+  padding: 2px;
+  font-size: 14.5px;
   cursor: pointer;
   background-color: var(--button-background-dark);
   color: var(--color-text-dark);
@@ -66,4 +66,49 @@ body {
 .popup button:hover {
   background-color: var(--color-primary-hover);
   color: #fff;
+}
+
+/* Put the main button and the copy icon on the same row */
+.domain-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px; /* only horizontal spacing between the two buttons */
+}
+
+/* Keep the main button exactly like your original */
+.domain-row .domain-btn {
+  width: 60%;
+  margin: 3.5px 0;
+  /* padding: 3px; */
+  font-size: 15.5px;
+}
+
+/* Small copy button on the right (override global .popup button rules) */
+.domain-row .copy-btn {
+  flex: 0 0 30px;   /* fixed width inside the row */
+  width: 30px;      /* prevent inheriting 60% width */
+  height: 26px;     /* align visually with main button height */
+  margin: 3.5px 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.domain-row .copy-btn svg {
+  width: 16px;     /* was 14px */
+  height: 16px;
+}
+
+/* Smooth feedback when SKU is copied */
+.sku-line {
+  transition: color 200ms ease, text-decoration-color 200ms ease, transform 120ms ease;
+}
+
+.sku-line.copied {
+  color: #05b54ea0;                 /* green */
+  text-decoration: underline;     /* your existing cue */
+  /* text-decoration-thickness: 1px; crisp underline */
+  
 }

@@ -85,20 +85,11 @@ const Popup: React.FC = () => {
   useEffect(() => {
     const handler = (message: any) => {
       if (!message || message.action !== "fetchComplete") return;
-      const { domain, requestId, url, error } = message as any;
+      const { domain, requestId, url, error, mode } = message as any;
       if (!domain) return;
 
       const sanitized = sanitizeUrl(url, domain);
 
-      // get current in-ref state
-      const cur = statesRef.current[domain] ?? { ...defaultState };
-      const shouldOpen = !!(
-        cur.requestId &&
-        requestId &&
-        cur.requestId === requestId
-      );
-
-      // update state
       setStates((prev) => {
         const curPrev = prev[domain] ?? { ...defaultState };
         const next: DomainState = {
@@ -110,13 +101,17 @@ const Popup: React.FC = () => {
         return { ...prev, [domain]: next };
       });
 
-      // Only open tab (and copy) if this corresponds to the requestId we started
-      if (shouldOpen && sanitized) {
+      // Behavior based on mode:
+      // - "open" or missing mode (backwards-compat): open tab + copy
+      // - "copy": just copy (no tab)
+      if ((mode === "open" || mode === undefined) && sanitized && requestId) {
         try {
           chrome.tabs.create({ url: sanitized, active: true });
         } catch {
           /* ignore */
         }
+        copyToClipboard(sanitized).catch(() => {});
+      } else if (mode === "copy" && sanitized && requestId) {
         copyToClipboard(sanitized).catch(() => {});
       }
     };
@@ -133,7 +128,8 @@ const Popup: React.FC = () => {
 
   const startFetchFor = (
     domain: string,
-    providedRequestId?: string
+    providedRequestId?: string,
+    mode: "open" | "copy" = "open"
   ): string | undefined => {
     if (!hasSku) return undefined;
     const req = providedRequestId ?? makeRequestId(domain);
@@ -145,12 +141,12 @@ const Popup: React.FC = () => {
       const next: DomainState = { ...cur, requestId: req };
 
       try {
-        // send normalized SKU to background
         chrome.runtime.sendMessage({
           action: "startFetch",
           domain,
           sku: normalizedSku,
           requestId: req,
+          mode,
         });
       } catch (e) {
         console.warn("startFetch sendMessage failed", e);
@@ -176,8 +172,8 @@ const Popup: React.FC = () => {
       openDomainRoot(domain);
       return;
     }
-    // start fetch; popup will open when matching fetchComplete arrives
-    startFetchFor(domain);
+    // Start fetch; tab will open when matching fetchComplete arrives
+    startFetchFor(domain, undefined, "open");
   };
 
   const handleSkuClick = async () => {
@@ -191,7 +187,8 @@ const Popup: React.FC = () => {
     }
   };
 
-  // Copy logic: prefer in-memory finalUrl, then storage (try normalized and raw), fallback to search or domain root
+  // Copy logic: prefer in-memory finalUrl, then trigger a "copy" fetch and let the global listener copy it.
+  // As a safety net, after a short timeout, fall back to storage/search/domain if nothing arrived.
   const handleCopy = async (domain: string) => {
     const origin = `https://www.deporvillage.${domain}`;
     const domainRoot = `${origin}/`;
@@ -199,47 +196,54 @@ const Popup: React.FC = () => {
       normalizedSku
     )}`;
 
-    // 1) in-memory state
+    // 1) If we already have a finalUrl in memory, use it
     const inStateRaw = statesRef.current?.[domain]?.finalUrl ?? null;
     const inStateSan = sanitizeUrl(inStateRaw, domain);
-    console.log("handleCopy start", {
-      domain,
-      inStateRaw,
-      inStateSan,
-      normalizedSku,
-    });
-
     if (inStateSan) {
       await copyToClipboard(inStateSan);
-      console.log("copied (state)", inStateSan);
       return;
     }
 
-    // 2) storage (try normalized then raw key)
+    // 2) Trigger a "copy" fetch. The global listener will copy upon fetchComplete.
     if (hasSku) {
-      const keys = [
-        `pdp_${domain}_${normalizedSku}`,
-        `pdp_${domain}_${rawSku}`,
-      ];
-      for (const key of keys) {
-        const stored = await getFromStorage(key);
-        const storedSan = sanitizeUrl(stored, domain);
-        if (storedSan) {
-          await copyToClipboard(storedSan);
-          console.log("copied (storage)", key, storedSan);
+      startFetchFor(domain, undefined, "copy");
+
+      // 3) Safety fallback after ~1.2s if nothing copied/arrived
+      setTimeout(async () => {
+        const afterRaw = statesRef.current?.[domain]?.finalUrl ?? null;
+        const afterSan = sanitizeUrl(afterRaw, domain);
+        if (afterSan) {
+          await copyToClipboard(afterSan);
           return;
         }
-      }
 
-      // 3) fallback to catalog search URL
-      await copyToClipboard(searchUrl);
-      console.log("copied fallback search/catalog", searchUrl);
+        // Try storage (normalized, then raw)
+        const keys = [
+          `pdp_${domain}_${normalizedSku}`,
+          `pdp_${domain}_${rawSku}`,
+        ];
+        for (const key of keys) {
+          const stored = await getFromStorage(key);
+          const storedSan = sanitizeUrl(stored, domain);
+          if (storedSan) {
+            await copyToClipboard(storedSan);
+            return;
+          }
+        }
+
+        // Fallback to catalog search / domain root
+        if (hasSku) {
+          await copyToClipboard(searchUrl);
+        } else {
+          await copyToClipboard(domainRoot);
+        }
+      }, 1200);
+
       return;
     }
 
-    // 4) no SKU -> domain root
+    // 4) No SKU → copy domain root
     await copyToClipboard(domainRoot);
-    console.log("copied domain root", domainRoot);
   };
 
   return (
@@ -251,12 +255,10 @@ const Popup: React.FC = () => {
 
       {hasSku && (
         <p
-          className="sku-line"
+          className={`sku-line ${skuCopied ? "copied" : ""}`}
           onClick={handleSkuClick}
           style={{
             cursor: "pointer",
-            color: skuCopied ? "green" : undefined,
-            textDecoration: skuCopied ? "underline" : undefined,
           }}
           title="Click to copy SKU"
         >
