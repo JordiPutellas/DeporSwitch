@@ -1,6 +1,8 @@
+// src/content.ts (minimal change: new SKU selector)
 chrome.runtime.onMessage.addListener((request, __sender, sendResponse) => {
   if (request.action === "getSKU") {
-    const skuElement = document.querySelector('.Tabs_sku-reference__I0RlP span');
+    // UPDATED selector — minimal change
+    const skuElement = document.querySelector('.ProductDetailsDescription_sku-reference__w1NR9 span');
     if (skuElement) {
       sendResponse({ sku: skuElement.textContent });
     } else {
