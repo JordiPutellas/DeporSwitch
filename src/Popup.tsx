@@ -38,6 +38,13 @@ function sanitizeUrl(raw: string | null, domain?: string): string | null {
   try {
     const base = domain ? `https://www.deporvillage.${domain}` : undefined;
     const u = base ? new URL(raw, base) : new URL(raw);
+
+    // si es búsqueda, conserva el ?q=
+    if (u.pathname.startsWith("/catalogsearch/result")) {
+      return u.origin + u.pathname + u.search;
+    }
+
+    // si es PDP, quitamos query/hash
     return u.origin + u.pathname;
   } catch {
     return raw;
@@ -45,17 +52,17 @@ function sanitizeUrl(raw: string | null, domain?: string): string | null {
 }
 
 /** promise wrapper for chrome.storage.local.get */
-function getFromStorage(key: string): Promise<string | null> {
-  return new Promise((resolve) => {
-    try {
-      chrome.storage.local.get([key], (res) => {
-        resolve(res?.[key] ?? null);
-      });
-    } catch {
-      resolve(null);
-    }
-  });
-}
+// function getFromStorage(key: string): Promise<string | null> {
+//   return new Promise((resolve) => {
+//     try {
+//       chrome.storage.local.get([key], (res) => {
+//         resolve(res?.[key] ?? null);
+//       });
+//     } catch {
+//       resolve(null);
+//     }
+//   });
+// }
 
 const Popup: React.FC = () => {
   const { sku } = useSkuAndDomain();
@@ -181,7 +188,7 @@ const Popup: React.FC = () => {
     try {
       await copyToClipboard(sku);
       setSkuCopied(true);
-      setTimeout(() => setSkuCopied(false), 1400);
+      setTimeout(() => setSkuCopied(false), 800);
     } catch (e) {
       console.error("copy SKU failed", e);
     }
@@ -218,18 +225,18 @@ const Popup: React.FC = () => {
         }
 
         // Try storage (normalized, then raw)
-        const keys = [
-          `pdp_${domain}_${normalizedSku}`,
-          `pdp_${domain}_${rawSku}`,
-        ];
-        for (const key of keys) {
-          const stored = await getFromStorage(key);
-          const storedSan = sanitizeUrl(stored, domain);
-          if (storedSan) {
-            await copyToClipboard(storedSan);
-            return;
-          }
-        }
+        // const keys = [
+        //   `pdp_${domain}_${normalizedSku}`,
+        //   `pdp_${domain}_${rawSku}`,
+        // ];
+        // for (const key of keys) {
+        //   const stored = await getFromStorage(key);
+        //   const storedSan = sanitizeUrl(stored, domain);
+        //   if (storedSan) {
+        //     await copyToClipboard(storedSan);
+        //     return;
+        //   }
+        // }
 
         // Fallback to catalog search / domain root
         if (hasSku) {

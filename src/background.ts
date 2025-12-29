@@ -30,20 +30,21 @@ function sanitizeUrl(raw: string | null, base?: string): string | null {
 /**
  * Persist sanitized PDP url under key `pdp_<domain>_<sku>`
  */
-function persistPdp(domain: string, sku: string, sanitizedUrl: string) {
-  if (!sku) return;
-  const key = `pdp_${domain}_${sku}`;
-  const obj: Record<string, string> = {};
-  obj[key] = sanitizedUrl;
-  try {
-    chrome.storage.local.set(obj, () => {
-      // optional small log for debugging - remove if noisy
-      console.log(`[background] stored ${key} -> ${sanitizedUrl}`);
-    });
-  } catch (e) {
-    console.warn("[background] storage set failed", e);
-  }
-}
+// function persistPdp(domain: string, sku: string, sanitizedUrl: string) {
+//   // if (!sku) return;
+//   // const key = `pdp_${domain}_${sku}`;
+//   // const obj: Record<string, string> = {};
+//   // obj[key] = sanitizedUrl;
+//   // try {
+//   //   chrome.storage.local.set(obj, () => {
+//   //     // optional small log for debugging - remove if noisy
+//   //     console.log(`[background] stored ${key} -> ${sanitizedUrl}`);
+//   //   });
+//   // } catch (e) {
+//   //   console.warn("[background] storage set failed", e);
+//   // }
+//   console.log(`[background] persistPdp skipped (would store ${domain} / ${sku} -> ${sanitizedUrl})`);
+// }
 
 /**
  * Send fetchComplete to other parts of the extension
@@ -106,37 +107,52 @@ chrome.runtime.onMessage.addListener(
             const text = await resp.text();
 
             // Quick string-based extraction
-            let finalUrlRaw: string | null = null;
-            try {
-              const wrapperRegex =
-                /ProductItemWrapper_product-wrapper-component__MfmoG|class=["'][^"']*(?:product-list|products-grid)[^"']*["']/i;
-              const wrapperMatch = text.search(wrapperRegex);
-              if (wrapperMatch !== -1) {
-                const lookbackStart = Math.max(0, wrapperMatch - 2000);
-                const snippet = text.slice(lookbackStart, wrapperMatch + 2000);
-                const aMatch = snippet.match(
-                  /<a\s[^>]*href=["']([^"']+)["'][^>]*>/i
-                );
-                if (aMatch && aMatch[1]) {
-                  const href = aMatch[1].trim();
-                  finalUrlRaw = href.startsWith("http")
-                    ? href
-                    : new URL(href, origin).href;
-                  console.log(
-                    `[background] quick-extract found (raw) ${finalUrlRaw}`
-                  );
+            // Quick string-based extraction (robusto: primer PDP link del HTML)
+                let finalUrlRaw: string | null = null;
+                try {
+                  // 1) Sacar todos los href de anchors (rápido)
+                  const hrefMatches = [...text.matchAll(/<a\s[^>]*href=["']([^"']+)["'][^>]*>/gi)];
+
+                  for (const m of hrefMatches) {
+                    const rawHref = (m[1] || "").trim().replace(/&amp;/g, "&");
+                    if (!rawHref) continue;
+
+                    const abs = rawHref.startsWith("http")
+                        ? rawHref
+                        : new URL(rawHref, origin).href;
+
+                      try {
+                        const u = new URL(abs);
+
+                        if (u.origin !== origin) continue;
+
+                        // 🔥 clave: en el catálogo nuevo, los PDP del listado llevan queryID
+                        if (!u.searchParams.has("queryID")) continue;
+
+                        // descartar basura
+                        if (u.pathname.startsWith("/catalogsearch/")) continue;
+                        if (u.pathname.startsWith("/stc/")) continue;
+                        if (u.pathname.startsWith("/customer/")) continue;
+                        if (u.pathname === "/") continue;
+
+                        finalUrlRaw = abs;
+                        console.log(`[background] quick-extract found (raw) ${finalUrlRaw}`);
+                        break;
+                      } catch {
+                        continue;
+                      }
+                  }
+                } catch (e) {
+                  console.warn("[background] quick-extract error", e);
                 }
-              }
-            } catch (e) {
-              console.warn("[background] quick-extract error", e);
-            }
+
 
             if (finalUrlRaw) {
               // sanitize, persist and notify
               const sanitizedFinal = sanitizeUrl(finalUrlRaw, origin);
-              if (sanitizedFinal && normalizedSku) {
-                persistPdp(domain, normalizedSku, sanitizedFinal);
-              }
+              // if (sanitizedFinal && normalizedSku) {
+              //   persistPdp(domain, normalizedSku, sanitizedFinal);
+              // }
 
               notifyFetchComplete(
                 requestId,
@@ -214,9 +230,9 @@ chrome.runtime.onMessage.addListener(
                     const urlFromContent = response?.url ?? null;
                     const sanitized = sanitizeUrl(urlFromContent, origin);
 
-                    if (sanitized && normalizedSku) {
-                      persistPdp(domain, normalizedSku, sanitized);
-                    }
+                    // if (sanitized && normalizedSku) {
+                    //   persistPdp(domain, normalizedSku, sanitized);
+                    // }
 
                     notifyFetchComplete(
                       requestId,
