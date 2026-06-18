@@ -10,7 +10,7 @@ chrome.runtime.onMessage.addListener((request, __sender, sendResponse) => {
     }
   } else if (request.action === "getFirstResultUrl") {
     console.log('Received getFirstResultUrl action');
-    const firstResultElement = document.querySelector('[data-testid="plp-product-list"] [data-testid="product-card"] a[href]:not([href*="/catalogsearch/"])') as HTMLAnchorElement;
+    const firstResultElement = document.querySelector('[data-testid="product-card"] a[href]:not([href*="/catalogsearch/"])') as HTMLAnchorElement;
     if (firstResultElement) {
       const firstResultUrl = firstResultElement.href;
       console.log(`Extracted first result URL: ${firstResultUrl}`);
