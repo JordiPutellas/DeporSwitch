@@ -25,6 +25,7 @@ const domains = [
   "cz",
   "at",
   "co.uk",
+  "ch",
 ];
 
 const makeRequestId = (domain: string) =>

@@ -7,12 +7,11 @@ body {
 
 .popup {
   text-align: center;
-  width: 200px;
+  width: 340px;
   padding: 0px;
-  margin-top: 0px;
+  margin: 0 auto;
   padding-top: 0px;
   padding-bottom: 0px;
-  margin-bottom: 0px;
   box-sizing: border-box;
 }
 
@@ -21,8 +20,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 0px;
-  margin-right: 35px;
+  margin-bottom: 10px;
   margin-top: 0px;
   padding:0%
 }
@@ -30,9 +28,9 @@ body {
 .logo {
   width: 25px; /* Ajusta el tamaño del logo según sea necesario */
   height: 25px;
-  margin-right: 5px;
+  margin-right: 8px;
   margin-top: 0px;
-  padding-right: 5px;
+  padding: 0; /* override leaked padding from App.css .logo */
 }
 
 .popup h1 {
@@ -46,7 +44,7 @@ body {
 
 .popup p {
   font-size: 14px;
-  margin-bottom: 7px;
+  margin-bottom: 14px;
   margin-top: 0px;
 }
 
@@ -68,6 +66,15 @@ body {
   color: #fff;
 }
 
+/* Two-column grid so all domains fit without scrolling */
+.domain-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 10px;
+  row-gap: 4px;
+  padding: 0 6px 6px;
+}
+
 /* Put the main button and the copy icon on the same row */
 .domain-row {
   display: flex;
@@ -76,12 +83,18 @@ body {
   gap: 4px; /* only horizontal spacing between the two buttons */
 }
 
-/* Keep the main button exactly like your original */
+/* Domain button fills its grid cell (minus the copy icon) */
 .domain-row .domain-btn {
-  width: 60%;
-  margin: 3.5px 0;
-  /* padding: 3px; */
-  font-size: 15.5px;
+  width: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 2px 0;
+  font-size: 14px;
+  transition: background-color 0.2s, color 0.2s, transform 0.12s;
+}
+
+.domain-row .domain-btn:hover {
+  transform: scale(1.03);
 }
 
 /* Small copy button on the right (override global .popup button rules) */
@@ -89,7 +102,7 @@ body {
   flex: 0 0 30px;   /* fixed width inside the row */
   width: 30px;      /* prevent inheriting 60% width */
   height: 26px;     /* align visually with main button height */
-  margin: 3.5px 0;
+  margin: 2px 0;
   padding: 0;
   display: inline-flex;
   align-items: center;
