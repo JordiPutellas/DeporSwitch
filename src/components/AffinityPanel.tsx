@@ -54,6 +54,10 @@ const AffinityPanel: React.FC<AffinityPanelProps> = ({ profile }) => {
         ))}
       </div>
 
+      <p className="affinity-hint">
+        Reparto de tu afinidad (% sobre el total de la pestaña)
+      </p>
+
       <svg
         className="affinity-svg"
         viewBox={`0 0 ${W} ${H}`}
@@ -67,7 +71,7 @@ const AffinityPanel: React.FC<AffinityPanelProps> = ({ profile }) => {
           const text = contrastText(b.color);
           return (
             <g key={b.key}>
-              <title>{`${b.key} · ${pct}%`}</title>
+              <title>{`${b.key} · ${pct}% · score DY: ${b.value}`}</title>
               <circle
                 cx={b.cx}
                 cy={b.cy}
