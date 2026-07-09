@@ -66,7 +66,7 @@ function sanitizeUrl(raw: string | null, domain?: string): string | null {
 // }
 
 const Popup: React.FC = () => {
-  const { sku } = useSkuAndDomain();
+  const { sku, alternates } = useSkuAndDomain();
 
   // normalized sku used for storage keys / messaging
   const rawSku = (sku ?? "").toString();
@@ -176,6 +176,20 @@ const Popup: React.FC = () => {
   };
 
   const handleDomainClick = (domain: string) => {
+    // Ruta rápida: si la página actual ya declara la URL equivalente para este
+    // dominio (hreflang), la abrimos directamente. Funciona en PDP, categorías
+    // y páginas filtradas, sin fetch ni búsqueda por SKU.
+    const direct = alternates[domain];
+    if (direct) {
+      try {
+        chrome.tabs.create({ url: direct, active: true });
+      } catch {
+        /* ignore */
+      }
+      copyToClipboard(direct).catch(() => {});
+      return;
+    }
+
     if (!hasSku) {
       openDomainRoot(domain);
       return;
@@ -203,6 +217,13 @@ const Popup: React.FC = () => {
     const searchUrl = `${origin}/catalogsearch/result?q=${encodeURIComponent(
       normalizedSku
     )}`;
+
+    // 0) Ruta rápida: URL equivalente (hreflang) declarada en la página actual.
+    const direct = alternates[domain];
+    if (direct) {
+      await copyToClipboard(direct);
+      return;
+    }
 
     // 1) If we already have a finalUrl in memory, use it
     const inStateRaw = statesRef.current?.[domain]?.finalUrl ?? null;
@@ -282,7 +303,11 @@ const Popup: React.FC = () => {
                 className="domain-btn"
                 onClick={() => handleDomainClick(d)}
                 title={
-                  hasSku ? `Search and open .${d}` : `Open deporvillage.${d}`
+                  alternates[d]
+                    ? `Open equivalent page on .${d}`
+                    : hasSku
+                    ? `Search and open .${d}`
+                    : `Open deporvillage.${d}`
                 }
               >
                 <span className="dot">.</span>
