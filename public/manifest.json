@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
-  "version": "1.2.0",
+  "version": "1.2.1",
   "name": "DeporSwitch",
 
   "action": {
     "default_popup": "index.html"
   },
-  "permissions": ["activeTab", "tabs"],
+  "permissions": ["activeTab", "tabs", "scripting"],
   "host_permissions": [
     "https://www.deporvillage.com/*",
     "https://www.deporvillage.fr/*",
