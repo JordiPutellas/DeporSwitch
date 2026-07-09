@@ -62,7 +62,7 @@ const AffinityPanel: React.FC<AffinityPanelProps> = ({ profile }) => {
         aria-label={`Afinidad por ${current.label.toLowerCase()}`}
       >
         {bubbles.map((b) => {
-          const pct = Math.round(b.value * 100);
+          const pct = b.pct;
           const showLabel = b.r >= 20;
           const text = contrastText(b.color);
           return (
@@ -105,7 +105,7 @@ const AffinityPanel: React.FC<AffinityPanelProps> = ({ profile }) => {
           <li key={b.key} title={b.key}>
             <span className="swatch" style={{ backgroundColor: b.color }} />
             <span className="name">{b.key}</span>
-            <span className="val">{Math.round(b.value * 100)}%</span>
+            <span className="val">{b.pct}%</span>
           </li>
         ))}
       </ul>

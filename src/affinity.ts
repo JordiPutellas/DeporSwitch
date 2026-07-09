@@ -92,6 +92,10 @@ function packRadii(radii: number[]): Placed[] {
 export type PackedBubble = {
   key: string;
   value: number;
+  /** Score relative to the strongest item in the group, 0..100. The raw DY
+   *  score is not a 0..1 probability (its scale varies), so we normalise to the
+   *  group max — which also matches how the bubble radius is sized. */
+  pct: number;
   color: string;
   cx: number;
   cy: number;
@@ -145,6 +149,7 @@ export function buildBubbles(
     return {
       key,
       value,
+      pct: Math.round((value / maxV) * 100),
       color: colorFor(key, p.i),
       cx: p.x * scale + offsetX,
       cy: p.y * scale + offsetY,
