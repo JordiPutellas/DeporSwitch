@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "1.3.2",
+  "version": "1.3.3",
   "name": "DeporSwitch",
   "description": "Cambia entre dominios de Deporvillage, abre la URL equivalente de producto/categoría y consulta tu afinidad de Dynamic Yield.",
 

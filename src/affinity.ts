@@ -92,9 +92,12 @@ function packRadii(radii: number[]): Placed[] {
 export type PackedBubble = {
   key: string;
   value: number;
-  /** Score relative to the strongest item in the group, 0..100. The raw DY
-   *  score is not a 0..1 probability (its scale varies), so we normalise to the
-   *  group max — which also matches how the bubble radius is sized. */
+  /** Share of the group's visible total, 0..100 — a tab's bubbles sum to ~100
+   *  (±1 from rounding). The raw DY score has no fixed scale (0..1 floats in
+   *  some environments, small integers in others), so an absolute % would be
+   *  meaningless; the share of the group is what reads naturally. It also
+   *  matches the geometry: bubble AREA ∝ score, so each share is that bubble's
+   *  slice of the total ink. */
   pct: number;
   color: string;
   cx: number;
@@ -121,6 +124,7 @@ export function buildBubbles(
   if (items.length === 0) return [];
 
   const maxV = Math.max(...items.map(([, v]) => v));
+  const sumV = items.reduce((t, [, v]) => t + v, 0);
   // Area ∝ value -> radius ∝ sqrt(value); small floor keeps the tiniest visible.
   const radii = items.map(([, v]) => Math.sqrt(v / maxV) + 0.14);
   const placed = packRadii(radii);
@@ -149,7 +153,7 @@ export function buildBubbles(
     return {
       key,
       value,
-      pct: Math.round((value / maxV) * 100),
+      pct: Math.round((value / sumV) * 100),
       color: colorFor(key, p.i),
       cx: p.x * scale + offsetX,
       cy: p.y * scale + offsetY,

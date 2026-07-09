@@ -178,6 +178,14 @@ body {
   color: #fff;
 }
 
+/* Small caption clarifying what the percentages mean. Needs .popup prefix to
+   beat the generic `.popup p` margin/size rules. */
+.popup .affinity-hint {
+  margin: 0 0 4px;
+  font-size: 10.5px;
+  opacity: 0.6;
+}
+
 .affinity-svg {
   display: block;
   width: 100%;
