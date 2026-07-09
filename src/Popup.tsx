@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from "react";
 import useSkuAndDomain from "./hooks/useSkuAndDomain";
+import useAffinity from "./hooks/useAffinity";
+import AffinityPanel from "./components/AffinityPanel";
 import { copyToClipboard } from "./utils";
 import "./Popup.css";
 import logo from "../public/logo.png";
@@ -67,6 +69,8 @@ function sanitizeUrl(raw: string | null, domain?: string): string | null {
 
 const Popup: React.FC = () => {
   const { sku, alternates } = useSkuAndDomain();
+  const { available: affinityAvailable, profile: affinityProfile } = useAffinity();
+  const [showAffinity, setShowAffinity] = useState(false);
 
   // normalized sku used for storage keys / messaging
   const rawSku = (sku ?? "").toString();
@@ -276,7 +280,7 @@ const Popup: React.FC = () => {
   };
 
   return (
-    <div className="popup">
+    <div className={`popup ${showAffinity ? "popup--wide" : ""}`}>
       <div className="header">
         <img src={logo} alt="Logo" className="logo" />
         <h1>DeporSwitch</h1>
@@ -330,6 +334,20 @@ const Popup: React.FC = () => {
           );
         })}
       </div>
+
+      {affinityAvailable && affinityProfile && (
+        <div className="affinity-section">
+          <button
+            className="affinity-toggle"
+            onClick={() => setShowAffinity((s) => !s)}
+            aria-expanded={showAffinity}
+          >
+            {showAffinity ? "Ocultar afinidad ▲" : "Mi afinidad ▼"}
+          </button>
+
+          {showAffinity && <AffinityPanel profile={affinityProfile} />}
+        </div>
+      )}
     </div>
   );
 };
